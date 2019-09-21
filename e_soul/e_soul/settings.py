@@ -36,7 +36,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
-    'soul',  # 搜索
+    'snippets',  # 搜索
 ]
 
 MIDDLEWARE = [
@@ -119,6 +119,6 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 
-REST_FRAMEWORK = {
-    'PAGE_SIZE': 10
-}
+# REST_FRAMEWORK = {
+#     'PAGE_SIZE': 10
+# }
