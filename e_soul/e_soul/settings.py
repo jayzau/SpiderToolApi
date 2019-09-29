@@ -77,7 +77,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',  # 指定数据库驱动
         'NAME': 'e_soul',  # 指定的数据库名
         'USER': 'root',  # 数据库登录的用户名
-        'PASSWORD': 'abc123456',  # 登录数据库的密码
+        'PASSWORD': '123456',  # 登录数据库的密码
         'HOST': '127.0.0.1',
         'PORT': '3306',  # 数据库服务器端口，mysql默认为3306
     }
