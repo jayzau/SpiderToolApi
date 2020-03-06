@@ -1,8 +1,6 @@
 import tensorflow as tf
 import numpy as np
 import os
-from PIL import Image
-import random
 
 
 class CNN(object):
@@ -13,8 +11,8 @@ class CNN(object):
         self.max_captcha = max_captcha
         self.char_set = char_set
         self.char_set_len = len(char_set)
-        self.model_save_dir = model_save_dir  # 模型路径
-        self.model_save_name = model_save_name  # 模型名字
+        self.model_save_dir = model_save_dir  # 模型文件夹
+        self.model_save_path = os.path.join(model_save_dir, model_save_name)  # 模型路径
         with tf.name_scope('parameters'):
             self.w_alpha = 0.01
             self.b_alpha = 0.1

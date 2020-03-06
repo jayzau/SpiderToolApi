@@ -2,8 +2,6 @@
 验证图片尺寸和分离测试集（5%）和训练集（95%）
 初始化的时候使用，有新的图片后，可以把图片放在new目录里面使用。
 """
-import json
-
 from PIL import Image
 import random
 import os

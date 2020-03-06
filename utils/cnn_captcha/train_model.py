@@ -1,6 +1,4 @@
 # -*- coding: utf-8 -*-
-import json
-
 import tensorflow as tf
 import numpy as np
 import matplotlib.pyplot as plt
@@ -170,7 +168,7 @@ class TrainModel(CNN):
                     # saver.restore(sess, checkpoint_file)
 
                     # 指定模型
-                    saver.restore(sess, self.model_save_dir + self.model_save_name)
+                    saver.restore(sess, self.model_save_path)
                 # 判断捕获model文件夹中没有模型文件的错误
                 except (ValueError, NotFoundError):
                     print("model文件夹为空，将创建新模型")
@@ -188,8 +186,10 @@ class TrainModel(CNN):
                 if step % 10 == 0:
                     # 基于训练集的测试
                     batch_x_test, batch_y_test = self.get_batch(i, size=self.train_batch_size)
-                    acc_char = sess.run(accuracy_char_count, feed_dict={self.X: batch_x_test, self.Y: batch_y_test, self.keep_prob: 1.})
-                    acc_image = sess.run(accuracy_image_count, feed_dict={self.X: batch_x_test, self.Y: batch_y_test, self.keep_prob: 1.})
+                    acc_char = sess.run(accuracy_char_count, feed_dict={
+                        self.X: batch_x_test, self.Y: batch_y_test, self.keep_prob: 1.})
+                    acc_image = sess.run(accuracy_image_count, feed_dict={
+                        self.X: batch_x_test, self.Y: batch_y_test, self.keep_prob: 1.})
                     print("第{}次训练 >>> ".format(step))
                     print("[训练集] 字符准确率为 {:.5f} 图片准确率为 {:.5f} >>> loss {:.10f}".format(acc_char, acc_image, cost_))
 
@@ -198,8 +198,10 @@ class TrainModel(CNN):
 
                     # 基于验证集的测试
                     batch_x_verify, batch_y_verify = self.get_verify_batch(size=self.test_batch_size)
-                    acc_char = sess.run(accuracy_char_count, feed_dict={self.X: batch_x_verify, self.Y: batch_y_verify, self.keep_prob: 1.})
-                    acc_image = sess.run(accuracy_image_count, feed_dict={self.X: batch_x_verify, self.Y: batch_y_verify, self.keep_prob: 1.})
+                    acc_char = sess.run(accuracy_char_count, feed_dict={
+                        self.X: batch_x_verify, self.Y: batch_y_verify, self.keep_prob: 1.})
+                    acc_image = sess.run(accuracy_image_count, feed_dict={
+                        self.X: batch_x_verify, self.Y: batch_y_verify, self.keep_prob: 1.})
                     print("[验证集] 字符准确率为 {:.5f} 图片准确率为 {:.5f} >>> loss {:.10f}".format(acc_char, acc_image, cost_))
 
                     # with open("loss_test.csv", "a+") as f:
@@ -207,15 +209,15 @@ class TrainModel(CNN):
 
                     # 准确率达到99%后保存并停止
                     if acc_image > self.acc_stop:
-                        saver.save(sess, self.model_save_dir + self.model_save_name)
+                        saver.save(sess, self.model_save_path)
                         print("验证集准确率达到99%，保存模型成功")
                         break
                 # 每训练500轮就保存一次
                 if i % self.cycle_save == 0:
-                    saver.save(sess, self.model_save_dir + self.model_save_name)
+                    saver.save(sess, self.model_save_path)
                     print("定时保存模型成功")
                 step += 1
-            saver.save(sess, self.model_save_dir + self.model_save_name)
+            saver.save(sess, self.model_save_path)
 
     def recognize_captcha(self):
         label, captcha_array = self.gen_captcha_text_image(self.train_img_path, random.choice(self.train_images_list))
@@ -232,7 +234,7 @@ class TrainModel(CNN):
 
         saver = tf.train.Saver()
         with tf.Session() as sess:
-            saver.restore(sess, self.model_save_dir + self.model_save_name)
+            saver.restore(sess, self.model_save_path)
             predict = tf.argmax(tf.reshape(y_predict, [-1, self.max_captcha, self.char_set_len]), 2)
             text_list = sess.run(predict, feed_dict={self.X: [image], self.keep_prob: 1.})
             predict_text = text_list[0].tolist()

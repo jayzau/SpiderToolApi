@@ -73,7 +73,7 @@ class TestBatch(CNN):
 
         saver = tf.train.Saver()
         with tf.Session() as sess:
-            saver.restore(sess, self.model_save_dir + self.model_save_name)
+            saver.restore(sess, self.model_save_path)
             s = time.time()
             for i in range(total):
                 # test_text, test_image = gen_special_num_image(i)

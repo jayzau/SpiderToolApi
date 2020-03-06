@@ -10,8 +10,9 @@ for i in range(10):
 import tensorflow as tf
 import numpy as np
 from PIL import Image
-from cnnlib.network import CNN
-import json
+
+from utils.cnn_captcha.cnnlib.network import CNN
+from utils.cnn_captcha.settings import CAPTCHA_CONFIG
 
 
 class Recognizer(CNN):
@@ -35,7 +36,7 @@ class Recognizer(CNN):
             self.predict = tf.argmax(tf.reshape(self.y_predict, [-1, self.max_captcha, self.char_set_len]), 2)
             saver = tf.train.Saver()
             with self.sess.as_default() as sess:
-                saver.restore(sess, self.model_save_dir + self.model_save_name)
+                saver.restore(sess, self.model_save_path)
 
     # def __del__(self):
     #     self.sess.close()
@@ -61,20 +62,18 @@ class Recognizer(CNN):
         return p_text
 
 
-def main():
-    with open("conf/sample_config.json", "r", encoding="utf-8") as f:
-        sample_conf = json.load(f)
-    image_height = sample_conf["image_height"]
-    image_width = sample_conf["image_width"]
-    max_captcha = sample_conf["max_captcha"]
-    char_set = sample_conf["char_set"]
-    model_save_dir = sample_conf["model_save_dir"]
-    model_save_name = sample_conf["model_save_name"]
+def main(path):
+    image_height = CAPTCHA_CONFIG["image_height"]
+    image_width = CAPTCHA_CONFIG["image_width"]
+    max_captcha = CAPTCHA_CONFIG["max_captcha"]
+    char_set = CAPTCHA_CONFIG["char_set"]
+    model_save_dir = CAPTCHA_CONFIG["model_save_dir"]
+    model_save_name = CAPTCHA_CONFIG["model_save_name"]
     R = Recognizer(image_height, image_width, max_captcha, char_set, model_save_dir, model_save_name)
-    r_img = Image.open("./sample/test/2b3n_6915e26c67a52bc0e4e13d216eb62b37.jpg")
+    r_img = Image.open(path)
     t = R.rec_image(r_img)
     print(t)
 
 
 if __name__ == '__main__':
-    main()
+    main(path="./sample/test/2b3n_6915e26c67a52bc0e4e13d216eb62b37.jpg")
