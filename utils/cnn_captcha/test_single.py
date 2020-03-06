@@ -70,7 +70,7 @@ def main():
     max_captcha = CAPTCHA_CONFIG["max_captcha"]
 
     model_save_dir = CAPTCHA_CONFIG["model_save_dir"]
-    model_save_name = CAPTCHA_CONFIG["model_save_name"]
+    model_save_name = "hb56.ckpt" or CAPTCHA_CONFIG["model_save_name"]
 
     use_labels_json_file = CAPTCHA_CONFIG['use_labels_json_file']
 
