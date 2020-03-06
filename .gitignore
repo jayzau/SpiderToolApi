@@ -104,3 +104,11 @@ venv.bak/
 .mypy_cache/
 
 .idea/
+
+# 数据文件
+captcha/
+model/
+labels.json
+test.csv
+loss_test.csv
+loss_train.csv
