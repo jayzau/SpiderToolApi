@@ -9,8 +9,8 @@ import os
 
 from tensorflow.python.framework.errors_impl import NotFoundError
 
-from utils.cnn_captcha.cnnlib.network import CNN
-from utils.cnn_captcha.settings import CAPTCHA_CONFIG
+from library.cnn_captcha.cnnlib.network import CNN
+from library.cnn_captcha.settings import CAPTCHA_CONFIG
 
 
 class TrainError(Exception):

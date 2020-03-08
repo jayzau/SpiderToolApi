@@ -7,7 +7,7 @@ import random
 import os
 import shutil
 
-from utils.cnn_captcha.settings import CAPTCHA_CONFIG
+from library.cnn_captcha.settings import CAPTCHA_CONFIG
 
 
 def verify(origin_dir, real_width, real_height, image_suffix):

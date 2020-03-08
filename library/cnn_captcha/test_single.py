@@ -8,8 +8,8 @@ from PIL import Image
 import random
 import os
 
-from utils.cnn_captcha.cnnlib.network import CNN
-from utils.cnn_captcha.settings import CAPTCHA_CONFIG
+from library.cnn_captcha.cnnlib.network import CNN
+from library.cnn_captcha.settings import CAPTCHA_CONFIG
 
 
 class TestError(Exception):
@@ -62,7 +62,7 @@ class TestSingle(CNN):
 
 
 def main():
-    test_img_path = "/home/jayzau/Desktop/LoginRdCode.jpeg"
+    test_img_path = "C:\\Users\\Jay\\Pictures\\LoginRdCode.jpg"
 
     image_width = CAPTCHA_CONFIG["image_width"]
     image_height = CAPTCHA_CONFIG["image_height"]

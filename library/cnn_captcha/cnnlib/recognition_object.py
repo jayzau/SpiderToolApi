@@ -11,8 +11,8 @@ import tensorflow as tf
 import numpy as np
 from PIL import Image
 
-from utils.cnn_captcha.cnnlib.network import CNN
-from utils.cnn_captcha.settings import CAPTCHA_CONFIG
+from library.cnn_captcha.cnnlib.network import CNN
+from library.cnn_captcha.settings import CAPTCHA_CONFIG
 
 
 class Recognizer(CNN):
