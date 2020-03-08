@@ -18,7 +18,7 @@ CAPTCHA_CONFIG = {
   "image_height": 60,
   "max_captcha": 4,
   "image_suffix": "png",
-  "char_set": "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ",
+  "char_set": "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ",
   "use_labels_json_file": False,
   "remote_url": "http://127.0.0.1:6100/captcha/",
   "cycle_stop": 81000,
