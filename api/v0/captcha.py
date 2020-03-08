@@ -14,7 +14,7 @@ def get_captcha():
     return f'Params:{request.args}'
 
 
-@api.route("/", methods="POST")
+@api.route("/", methods=["POST"])
 def read_captcha():
     """
     识别或上传一张验证码图片
