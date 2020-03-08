@@ -9,10 +9,8 @@ for i in range(10):
 """
 import tensorflow as tf
 import numpy as np
-from PIL import Image
 
 from library.cnn_captcha.cnnlib.network import CNN
-from library.cnn_captcha.settings import CAPTCHA_CONFIG
 
 
 class Recognizer(CNN):
@@ -44,7 +42,8 @@ class Recognizer(CNN):
 
     def rec_image(self, img):
         # 读取图片
-        img_array = np.array(img)
+        img_resize = img.resize((self.image_width, self.image_height))
+        img_array = np.array(img_resize)
         test_image = self.convert2gray(img_array)
         test_image = test_image.flatten() / 255
         # 使用指定的图和会话
@@ -62,18 +61,5 @@ class Recognizer(CNN):
         return p_text
 
 
-def main(path):
-    image_height = CAPTCHA_CONFIG["image_height"]
-    image_width = CAPTCHA_CONFIG["image_width"]
-    max_captcha = CAPTCHA_CONFIG["max_captcha"]
-    char_set = CAPTCHA_CONFIG["char_set"]
-    model_save_dir = CAPTCHA_CONFIG["model_save_dir"]
-    model_save_name = CAPTCHA_CONFIG["model_save_name"]
-    R = Recognizer(image_height, image_width, max_captcha, char_set, model_save_dir, model_save_name)
-    r_img = Image.open(path)
-    t = R.rec_image(r_img)
-    print(t)
-
-
 if __name__ == '__main__':
-    main(path="./sample/test/2b3n_6915e26c67a52bc0e4e13d216eb62b37.jpg")
+    pass
