@@ -14,7 +14,7 @@ recognizer = Recognizer(
     CAPTCHA_CONFIG["max_captcha"],
     CAPTCHA_CONFIG["char_set"],
     CAPTCHA_CONFIG["model_save_dir"],
-    "hb56.ckpt"
+    "m2004_100_60.ckpt"
 )
 
 
@@ -40,4 +40,4 @@ def read_captcha():
         r_img = Image.open(img_bytes)
         text = recognizer.rec_image(r_img)
         return text
-    return f"Data:{request.args}"
+    return ""
