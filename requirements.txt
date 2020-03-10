@@ -24,6 +24,7 @@ protobuf==3.11.3
 pyparsing==2.4.6
 python-dateutil==2.8.1
 pytz==2019.3
+redis==3.4.1
 requests==2.19.1
 six==1.14.0
 tensorboard==1.7.0
