@@ -62,7 +62,8 @@ class RedisClient(object):
         随机得到键值，用于随机Cookies获取
         :return: 随机Cookies
         """
-        return random.choice(self.db.hvals(self.name()))
+        val = self.db.hvals(self.name())    # []
+        return random.choice(val) if val else ""
 
     def user_names(self):
         """
