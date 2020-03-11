@@ -62,7 +62,7 @@ class SipglValidTester(ValidTester):
             cookie_jar = RequestsCookieJar()
             for cookie in cookie_list:
                 cookie_jar.set(name=cookie["name"], value=cookie["value"], domain=cookie["domain"])
-            response = request("GET", url=TEST_URL_MAP[self.website], allow_redirects=False)
+            response = request("GET", url=TEST_URL_MAP[self.website], cookies=cookie_jar, allow_redirects=False)
             if response.status_code == 200:
                 print(f"Cookie有效 | source:{_website} | user:{username}")
             else:
@@ -79,7 +79,7 @@ class SipglValidTester(ValidTester):
 
 
 if __name__ == '__main__':
-    debug = True
+    debug = False
     if debug:
         Hb56ValidTester().run()
     else:
@@ -96,3 +96,4 @@ if __name__ == '__main__':
                     time.sleep(CYCLE)
             except Exception as e:
                 print(e.args)
+            break

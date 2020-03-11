@@ -149,7 +149,7 @@ class SipglCookiesGenerator(CookiesGenerator):
 
 
 if __name__ == '__main__':
-    debug = True
+    debug = False
     if debug:
         generator = SipglCookiesGenerator()
         generator.run()
@@ -167,3 +167,4 @@ if __name__ == '__main__':
                     time.sleep(CYCLE)
             except Exception as e:
                 print(e.args)
+            break

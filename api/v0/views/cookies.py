@@ -45,7 +45,7 @@ def get_cookie(website):
     })
 
 
-@api.route("/count", methods=["GET"])
+@api.route("/count/", methods=["GET"])
 @api.route("/count/<string:website>", methods=["GET"])
 def get_count(website=""):
     """
@@ -116,7 +116,7 @@ def del_account():
     })
 
 
-@api.route("/accounts", methods=["GET"])
+@api.route("/accounts/", methods=["GET"])
 @api.route("/accounts/<string:website>", methods=["GET"])
 def get_accounts(website=""):
     """
