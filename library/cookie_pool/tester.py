@@ -1,8 +1,10 @@
 import json
 import requests
+from requests.cookies import RequestsCookieJar
 from requests.exceptions import ConnectionError
 
 from library.cookie_pool.redis_cli import RedisClient
+from library.cookie_pool.request import request, TooManyRetries
 from library.cookie_pool.settings import TEST_URL_MAP
 
 
@@ -46,6 +48,34 @@ class Hb56ValidTester(ValidTester):
                 print('删除Cookies', username)
         except ConnectionError as e:
             print('发生异常', e.args)
+
+
+class SipglValidTester(ValidTester):
+    def __int__(self, website="sipgl"):
+        ValidTester.__init__(self, website)
+
+    def test(self, username, cookies):
+        print(f"Cookie测试 | source:{_website} | user:{username}")
+        del_flag = False
+        try:
+            cookie_list = json.loads(cookies)
+            cookie_jar = RequestsCookieJar()
+            for cookie in cookie_list:
+                cookie_jar.set(name=cookie["name"], value=cookie["value"], domain=cookie["domain"])
+            response = request("GET", url=TEST_URL_MAP[self.website], allow_redirects=False)
+            if response.status_code == 200:
+                print(f"Cookie有效 | source:{_website} | user:{username}")
+            else:
+                del_flag = True
+                print(f"Cookie失效 | source:{_website} | user:{username}")
+        except (ValueError, KeyError):
+            del_flag = True
+            print(f"Cookie格式有误 | source:{_website} | user:{username}")
+        except TooManyRetries:
+            print(f"Cookie测试失败 | source:{_website} | user:{username}")
+        if del_flag:
+            self.cookies_db.delete(username)
+            print(f"已删除Cookie | source:{_website} | user:{username}")
 
 
 if __name__ == '__main__':

@@ -1,5 +1,9 @@
 import json
 
+import requests
+from requests.cookies import RequestsCookieJar
+
+from library.cookie_pool.request import request
 from library.cookie_pool.redis_cli import RedisClient
 
 
@@ -32,10 +36,14 @@ class CookiesGenerator(object):
         :param cookies:
         :return:
         """
-        dct = {}
+        lst = []
         for cookie in cookies:
-            dct[cookie['name']] = cookie['value']
-        return dct
+            lst.append({
+                "name": cookie.name,
+                "value": cookie.value,
+                "domain": cookie.domain
+            })
+        return lst
 
     def run(self):
         """
@@ -52,7 +60,7 @@ class CookiesGenerator(object):
                 result = self.new_cookies(username, password)
                 # 成功获取
                 if result.get('status') == 1:
-                    cookies = self.process_cookies(result.get('content'))
+                    cookies = self.process_cookies(result.get('cookies'))
                     print('成功获取到Cookies', cookies)
                     if self.cookies_db.set(username, json.dumps(cookies)):
                         print('成功保存Cookies')
@@ -89,10 +97,61 @@ class Hb56CookiesGenerator(CookiesGenerator):
         return {}
 
 
+class SipglCookiesGenerator(CookiesGenerator):
+    def __int__(self, website="sipgl"):
+        CookiesGenerator.__init__(self, website)
+
+    def new_cookies(self, username, password):
+        session = requests.Session()
+        host = "cx.sipgl-fa.com:81"
+        own_headers = {
+            'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) '
+                          'Chrome/75.0.3770.100 Safari/537.36'
+        }
+        """获取cookie"""
+        url = 'http://www.sipgl-fa.com/'
+        request("GET", url=url, session=session, headers=own_headers)
+        """获取验证码"""
+        pic_headers = {
+            'Referer': 'http://www.sipgl-fa.com/'
+        }
+        pic_headers.update(own_headers)
+        url = f'http://{host}/sipgl-fa/login/img'
+        res = request("GET", url=url, session=session, headers=pic_headers)
+        status_code = res.status_code
+        if status_code != 200:
+            res = request("GET", url=url, session=session, headers=pic_headers)
+        pic = res.content
+
+        pic_str = request("POST", url="http://101.200.120.188/api_v0/captcha/", files={"img": pic}).text
+        if not pic_str:
+            pic_str = request("POST", url="http://101.200.120.188/api_v0/captcha/", files={"img": pic}).text
+
+        if pic_str:
+            """登录并验证"""
+            url = f'http://{host}/sipgl-fa/login/lgnNew.json'
+            data = {
+                'laccount': 'guest',
+                'lpawword': 'guest',
+                'lauthcode': f'{pic_str}'
+            }
+            r = request("POST", url=url, session=session, headers=pic_headers, data=data)
+            if 'errorCode:1' in r.text:
+                if res:
+                    pass
+        cookies = session.cookies
+        session.close()
+        return {
+            "status": 1,
+            "cookies": cookies,
+            "content": ""
+        }
+
+
 if __name__ == '__main__':
-    debug = False
+    debug = True
     if debug:
-        generator = Hb56CookiesGenerator()
+        generator = SipglCookiesGenerator()
         generator.run()
     else:
         import time

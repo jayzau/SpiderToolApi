@@ -6,20 +6,22 @@ CYCLE = 30
 TYPE_COOKIES = "cookies"
 TYPE_ACCOUNTS = "accounts"
 TESTER_MAP = {
-    "hb56": "Hb56ValidTester"
+    # "hb56": "Hb56ValidTester",
+    "sipgl": "SipglValidTester"
 }
 TEST_URL_MAP = {
-    "hb56": "http://www.hb56.com/User/User.aspx"
+    "hb56": "http://www.hb56.com/User/User.aspx",
+    "sipgl": "http://cx.sipgl-fa.com:81/sipgl-fa/biz/SearchByBillno.jsp?appid=116&cnbillno=&token=379"
 }
 GENERATOR_MAP = {
-    "hb56": "Hb56CookiesGenerator",
-    "hb57": "Hb56CookiesGenerator",
+    # "hb56": "Hb56CookiesGenerator",
+    "sipgl": "SipglCookiesGenerator"
 }
 COOKIE_FREQUENCY_LIMIT = {          # cookie调用频率限制
     "hb56": 10
 }
 LOGIN_FREQUENCY_LIMIT = {           # 账号登录频率限制
-    "hb56": 10
+    "hb56": (1800, 3600)
 }
 
 GENERATOR_PROCESS = True
