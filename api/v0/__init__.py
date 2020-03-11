@@ -1,7 +1,7 @@
 from flask import Blueprint
 
 # from api.v0 import captcha
-from api.v0 import cookies
+from api.v0.views import cookies
 
 
 def create_blueprint():
