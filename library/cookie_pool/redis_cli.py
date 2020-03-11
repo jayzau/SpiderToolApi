@@ -79,6 +79,16 @@ class RedisClient(object):
         """
         return self.db.hgetall(self.name())
 
+    def lock(self, name, ex):
+        """
+        上锁
+        :return:
+        """
+        if isinstance(ex, tuple):
+            ex = random.randint(*ex)
+        key = f"{self.name()}:{name}"
+        return self.db.set(key, "1", ex=ex, nx=True)
+
 
 if __name__ == '__main__':
     redis_cli = RedisClient("accounts", "hb56")

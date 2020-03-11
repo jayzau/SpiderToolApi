@@ -1,7 +1,11 @@
+import random
+
 from flask import request, jsonify
 
+from api.v0.enums import Status
+from api.v0.forms import AddAccountForm, DelAccountForm
 from library.cookie_pool.redis_cli import RedisClient
-from library.cookie_pool.settings import TYPE_COOKIES, TYPE_ACCOUNTS, GENERATOR_MAP
+from library.cookie_pool.settings import TYPE_COOKIES, TYPE_ACCOUNTS, GENERATOR_MAP, COOKIE_FREQUENCY_LIMIT
 from library.redprint import RedPrint
 
 api = RedPrint("cookies")
@@ -14,15 +18,34 @@ def get_cookie(website):
     :param website:
     :return:
     """
+    cookie = ""
+    status = Status.success.value
     if website:
         redis_cli = RedisClient(TYPE_COOKIES, website)
-        cookie = redis_cli.random()
-        return cookie
-    return {}
+        times = COOKIE_FREQUENCY_LIMIT.get(website)
+        if times:
+            cookies = redis_cli.all()
+            if cookies:
+                while cookies and not cookie:
+                    cookie_keys = list(cookies.keys())
+                    account = random.choice(cookie_keys)
+                    if redis_cli.lock(account, times):      # 上锁成功
+                        cookie = cookies[account]
+                        break
+                    else:       # 冷却期 暂不可用
+                        del cookies[account]
+                else:   # 便利完了还没找到可用的
+                    status = Status.busy.value
+        else:       # 无频率限制 随机取一个即可
+            cookie = redis_cli.random()
+
+    return jsonify({
+        "status": status,
+        "cookie": cookie,
+    })
 
 
 @api.route("/count", methods=["GET"])
-@api.route("/count/", methods=["GET"])
 @api.route("/count/<string:website>", methods=["GET"])
 def get_count(website=""):
     """
@@ -30,98 +53,93 @@ def get_count(website=""):
     :param website:
     :return:
     """
-    string = []
+    def get_result(_website):
+        redis_cli_cookie = RedisClient(TYPE_COOKIES, _website)
+        redis_cli_account = RedisClient(TYPE_ACCOUNTS, _website)
+        _cookie_count = redis_cli_cookie.count()
+        _account_count = redis_cli_account.count()
+        return {
+            "website": _website,
+            "cookie_count": _cookie_count,
+            "account_count": _account_count,
+        }
+    details = []
     if website:
-        redis_cli_cookie = RedisClient(TYPE_COOKIES, website)
-        redis_cli_account = RedisClient(TYPE_ACCOUNTS, website)
-        cookie_count = redis_cli_cookie.count()
-        account_count = redis_cli_account.count()
-        string.append(f"{website}:{cookie_count}/{account_count}")
+        details.append(get_result(website))
     else:
         for website in GENERATOR_MAP.keys():
-            redis_cli_cookie = RedisClient(TYPE_COOKIES, website)
-            redis_cli_account = RedisClient(TYPE_ACCOUNTS, website)
-            cookie_count = redis_cli_cookie.count()
-            account_count = redis_cli_account.count()
-            string.append(f"{website}:{cookie_count}/{account_count}")
-    return "<br>".join(string)
+            details.append(get_result(website))
+    status = Status.success.value
+    return jsonify({
+        "status": status,
+        "details": details
+    })
 
 
 @api.route("", methods=["POST"])
 def add_account():
     """
-    新增账号
+    新增指定账号
     :return:
     """
-    website = request.form.get("website")
-    account = request.form.get("account")
-    password = request.form.get("password")
-    if all([website, account, password]):       # 缺一不可
-        if website not in GENERATOR_MAP.keys():        # 添加的账号所属网站还没有对应生成器
-            result = {
-                "status": 404,
-                "content": "website err"
-            }
-        else:
-            redis_cli = RedisClient(TYPE_ACCOUNTS, website)
-            redis_cli.set(account, password)
-            result = {
-                "status": 200,
-                "content": "ok"
-            }
+    form = AddAccountForm(request.form)
+    if form.validate():
+        redis_cli = RedisClient(TYPE_ACCOUNTS, form.website.data)
+        redis_cli.set(form.account.data, form.password.data)
+        status = Status.success.value
     else:
-        result = {
-            "status": 400,
-            "content": "input err"
-        }
-    return jsonify(result)
+        status = Status.input_err.value
+    error_str = form.errors
+    return jsonify({
+        "status": status,
+        "error_str": error_str
+    })
 
 
 @api.route("", methods=["DELETE"])
 def del_account():
     """
-    删除账号
+    删除指定账号
     :return:
     """
-    website = request.form.get("website")
-    account = request.form.get("account")
-    if all([website, account]):
-        if website not in GENERATOR_MAP.keys():        # 添加的账号所属网站还没有对应生成器
-            result = {
-                "status": 404,
-                "content": "website err"
-            }
-        else:
-            redis_cli = RedisClient(TYPE_ACCOUNTS, website)
-            redis_cli.delete(account)
-            result = {
-                "status": 200,
-                "content": "ok"
-            }
+    form = DelAccountForm(request.form)
+    if form.validate():
+        redis_cli = RedisClient(TYPE_ACCOUNTS, form.website.data)
+        redis_cli.delete(form.account.data)
+        status = Status.success.value
     else:
-        result = {
-            "status": 400,
-            "content": "input err"
-        }
-    return jsonify(result)
+        status = Status.input_err.value
+    error_str = form.errors
+    return jsonify({
+        "status": status,
+        "error_str": error_str
+    })
 
 
 @api.route("/accounts", methods=["GET"])
-@api.route("/accounts/", methods=["GET"])
 @api.route("/accounts/<string:website>", methods=["GET"])
 def get_accounts(website=""):
-    string = []
+    """
+    获取账号名和数量
+    :param website: 选择网站，空为全选
+    :return:
+    """
+    def get_result(_website):
+        redis_cli = RedisClient(TYPE_ACCOUNTS, _website)
+        _accounts = redis_cli.user_names()
+        return {
+            "website": _website,
+            "accounts": _accounts,
+            "amount": len(_accounts),
+        }
+    details = []
     if website:
-        string.append(f"<h3>{website}</h3>")
-        redis_cli = RedisClient(TYPE_ACCOUNTS, website)
-        accounts = redis_cli.user_names()
-        if accounts:
-            string.append("<br>".join(accounts))
+        details.append(get_result(website))
     else:
         for website in GENERATOR_MAP.keys():
-            string.append(f"<h3>{website}</h3>")
-            redis_cli = RedisClient(TYPE_ACCOUNTS, website)
-            accounts = redis_cli.user_names()
-            if accounts:
-                string.append("<br>".join(accounts))
-    return "<br>".join(string)
+            details.append(get_result(website))
+    status = Status.success.value
+    return jsonify({
+        "status": status,
+        "details": details
+    })
