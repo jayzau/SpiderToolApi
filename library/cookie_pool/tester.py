@@ -55,7 +55,7 @@ class SipglValidTester(ValidTester):
         ValidTester.__init__(self, website)
 
     def test(self, username, cookies):
-        print(f"Cookie测试 | source:{_website} | user:{username}")
+        print(f"Cookie测试 | source:{self.website} | user:{username}")
         del_flag = False
         try:
             cookie_list = json.loads(cookies)
@@ -64,36 +64,19 @@ class SipglValidTester(ValidTester):
                 cookie_jar.set(name=cookie["name"], value=cookie["value"], domain=cookie["domain"])
             response = request("GET", url=TEST_URL_MAP[self.website], cookies=cookie_jar, allow_redirects=False)
             if response.status_code == 200:
-                print(f"Cookie有效 | source:{_website} | user:{username}")
+                print(f"Cookie有效 | source:{self.website} | user:{username}")
             else:
                 del_flag = True
-                print(f"Cookie失效 | source:{_website} | user:{username}")
+                print(f"Cookie失效 | source:{self.website} | user:{username}")
         except (ValueError, KeyError):
             del_flag = True
-            print(f"Cookie格式有误 | source:{_website} | user:{username}")
+            print(f"Cookie格式有误 | source:{self.website} | user:{username}")
         except TooManyRetries:
-            print(f"Cookie测试失败 | source:{_website} | user:{username}")
+            print(f"Cookie测试失败 | source:{self.website} | user:{username}")
         if del_flag:
             self.cookies_db.delete(username)
-            print(f"已删除Cookie | source:{_website} | user:{username}")
+            print(f"已删除Cookie | source:{self.website} | user:{username}")
 
 
 if __name__ == '__main__':
-    debug = False
-    if debug:
-        Hb56ValidTester().run()
-    else:
-        import time
-        from library.cookie_pool.settings import TESTER_MAP, CYCLE
-        while True:
-            print('Cookies检测进程开始运行')
-            try:
-                for _website, cls in TESTER_MAP.items():
-                    tester = eval(cls + '(website="' + _website + '")')
-                    tester.run()
-                    print('Cookies检测完成')
-                    del tester
-                    time.sleep(CYCLE)
-            except Exception as e:
-                print(e.args)
-            break
+    SipglValidTester().run()

@@ -58,7 +58,7 @@ class CookiesGenerator(object):
         :param password:
         :return:
         """
-        if self.accounts_db.lock(LOGIN_LOCK_KEY, self.wait_time, xx=True):
+        if self.accounts_db.lock(f"{LOGIN_LOCK_KEY}{username}", self.wait_time, xx=True):
             # 在任务提交范围时间内才执行 超时说明worker数量不够 任务执行过于缓慢
             result = self.new_cookies(username, password)
             # 成功获取

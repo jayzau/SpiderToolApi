@@ -21,7 +21,7 @@ COOKIE_FREQUENCY_LIMIT = {          # cookie调用频率限制
     "hb56": 10
 }
 
-LOGIN_LOCK_KEY = "login:lock"
+LOGIN_LOCK_KEY = "login:lock:"
 LOGIN_TASK_WAITING_TIME = 2400      # 任务提交后的等待时间
 LOGIN_DEFAULT_FREQUENCY_LIMIT = 10        # 给个时间差容错
 LOGIN_FREQUENCY_LIMIT = {           # 账号登录频率限制

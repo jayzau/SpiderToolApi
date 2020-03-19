@@ -5,7 +5,7 @@ from flask import request, jsonify
 from api.v0.enums import Status
 from api.v0.forms import AddAccountForm, DelAccountForm
 from library.cookie_pool.redis_cli import RedisClient
-from library.async_rq2 import new_cookies
+from library.async_rq2 import new_cookies, check_cookies
 from library.cookie_pool.settings import TYPE_COOKIES, TYPE_ACCOUNTS, GENERATOR_MAP, COOKIE_FREQUENCY_LIMIT, \
     LOGIN_LOCK_KEY, LOGIN_TASK_WAITING_TIME
 from library.redprint import RedPrint
@@ -151,13 +151,50 @@ def get_accounts(website=""):
     })
 
 
-@api.route("/test/<string:user>", methods=["GET"])
-def test(user):     # 仅做测试用
-    act = RedisClient(TYPE_ACCOUNTS, "sipgl")
-    res = act.lock(LOGIN_LOCK_KEY, LOGIN_TASK_WAITING_TIME, nx=True)
-    if res:
-        password = act.get(user)
-        job = new_cookies.queue("SipglCookiesGenerator", "sipgl", user, password)
-        return job.id
-    else:
-        return "2"
+@api.route("/check_cookie_status/", methods=["GET"])
+def check_cookie_status():
+    """
+    检测哪些账号没有cookie 检测完毕之后提交重新登录 暂定
+    下一步计划：
+        增加账号数量控制，数量低于某个值，自动从相应地方提取填充
+        增加账号登录次数限制，比如某个账号单位时间内登录次数过多，邮箱提醒管理员进行处理
+    :return:
+    """
+    job_ids = []
+    for website, cls_name in GENERATOR_MAP.items():
+        cookies_db = RedisClient('cookies', website)
+        accounts_db = RedisClient('accounts', website)
+
+        accounts_user_names = accounts_db.user_names()
+        cookies_user_names = cookies_db.user_names()
+
+        for username in accounts_user_names:
+            # 遍历账号 查看有没有cookie
+            if username in cookies_user_names:      # cookie还存在 有效性不在这里检测
+                pass
+            elif accounts_db.lock(f"{LOGIN_LOCK_KEY}{username}", LOGIN_TASK_WAITING_TIME, nx=True):
+                # 这里要处理一下是否重复提交
+                password = accounts_db.get(username)
+                job = new_cookies.queue(cls_name, website, username, password)
+                job_ids.append(job.id)
+            else:       # 任务已经提交过，但还未做处理/登录冷却期 避免重复提交
+                pass
+    return {
+        "status": Status.success.value,
+        "details": job_ids
+    }
+
+
+@api.route("/check_cookie_validity/", methods=["GET"])
+def check_cookie_validity():
+    """
+    检测cookie是否还有效
+    下一步计划:
+        根据不同网站的cookie 制定不同的检测时间间隔
+    :return:
+    """
+    job = check_cookies.queue()
+    return {
+        "status": Status.success.value,
+        "details": job.id
+    }

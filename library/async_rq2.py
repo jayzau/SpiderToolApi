@@ -1,6 +1,8 @@
 from flask_rq2 import RQ
 from library.cookie_pool.generator import *
-
+from library.cookie_pool.tester import *
+import time
+from library.cookie_pool.settings import CYCLE, TESTER_MAP
 
 rq = RQ()
 
@@ -18,6 +20,20 @@ def new_cookies(cls_name: str, _website: str, username: str, password: str):
     try:
         gen = eval(f"{cls_name}(website='{_website}')")     # 实例化
         gen.async_run(username, password)       # 调用登录方法
+        del gen
+    except Exception as e:
+        print(e.args)
+
+
+@rq.job(func_or_queue="new_cookies")
+def check_cookies():
+    try:
+        for website, cls_name in TESTER_MAP.items():
+            tester = eval(cls_name + '(website="' + website + '")')
+            tester.run()
+            print('Cookies检测完成')
+            del tester
+            time.sleep(CYCLE)
     except Exception as e:
         print(e.args)
 
