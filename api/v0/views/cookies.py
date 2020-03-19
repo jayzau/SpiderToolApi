@@ -5,7 +5,9 @@ from flask import request, jsonify
 from api.v0.enums import Status
 from api.v0.forms import AddAccountForm, DelAccountForm
 from library.cookie_pool.redis_cli import RedisClient
-from library.cookie_pool.settings import TYPE_COOKIES, TYPE_ACCOUNTS, GENERATOR_MAP, COOKIE_FREQUENCY_LIMIT
+from library.async_rq2 import new_cookies
+from library.cookie_pool.settings import TYPE_COOKIES, TYPE_ACCOUNTS, GENERATOR_MAP, COOKIE_FREQUENCY_LIMIT, \
+    LOGIN_LOCK_KEY, LOGIN_TASK_WAITING_TIME
 from library.redprint import RedPrint
 
 api = RedPrint("cookies")
@@ -29,7 +31,7 @@ def get_cookie(website):
                 while cookies and not cookie:
                     cookie_keys = list(cookies.keys())
                     account = random.choice(cookie_keys)
-                    if redis_cli.lock(account, times):      # 上锁成功
+                    if redis_cli.lock(account, times, nx=True):      # 上锁成功
                         cookie = cookies[account]
                         break
                     else:       # 冷却期 暂不可用
@@ -104,8 +106,12 @@ def del_account():
     """
     form = DelAccountForm(request.form)
     if form.validate():
-        redis_cli = RedisClient(TYPE_ACCOUNTS, form.website.data)
-        redis_cli.delete(form.account.data)
+        # 先将对应cookie也应该删一次
+        redis_cli_cookies = RedisClient(TYPE_COOKIES, form.website.data)
+        redis_cli_cookies.delete(form.account.data)
+        # 再删除账号
+        redis_cli_accounts = RedisClient(TYPE_ACCOUNTS, form.website.data)
+        redis_cli_accounts.delete(form.account.data)
         status = Status.success.value
     else:
         status = Status.input_err.value
@@ -143,3 +149,15 @@ def get_accounts(website=""):
         "status": status,
         "details": details
     })
+
+
+@api.route("/test/<string:user>", methods=["GET"])
+def test(user):     # 仅做测试用
+    act = RedisClient(TYPE_ACCOUNTS, "sipgl")
+    res = act.lock(LOGIN_LOCK_KEY, LOGIN_TASK_WAITING_TIME, nx=True)
+    if res:
+        password = act.get(user)
+        job = new_cookies.queue("SipglCookiesGenerator", "sipgl", user, password)
+        return job.id
+    else:
+        return "2"

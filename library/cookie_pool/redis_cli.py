@@ -79,15 +79,19 @@ class RedisClient(object):
         """
         return self.db.hgetall(self.name())
 
-    def lock(self, name, ex):
+    def lock(self, name, ex, nx=False, xx=False):
         """
         上锁
+        :param xx: 已设置键才生效
+        :param ex: 存在多少秒
+        :param name: key
+        :param nx: 未设置键才生效
         :return:
         """
         if isinstance(ex, tuple):
             ex = random.randint(*ex)
         key = f"{self.name()}:{name}"
-        return self.db.set(key, "1", ex=ex, nx=True)
+        return self.db.set(key, "1", ex=ex, nx=nx, xx=xx)
 
 
 if __name__ == '__main__':
