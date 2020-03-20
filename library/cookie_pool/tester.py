@@ -1,7 +1,10 @@
 import json
+import time
+
 import requests
 from requests.cookies import RequestsCookieJar
 from requests.exceptions import ConnectionError
+from rq import get_current_job
 
 from library.cookie_pool.redis_cli import RedisClient
 from library.cookie_pool.request import request, TooManyRetries
@@ -19,8 +22,19 @@ class ValidTester(object):
 
     def run(self):
         cookies_groups = self.cookies_db.all()
+        job = get_current_job()
+        website = len(cookies_groups)
+        clear = 0
         for username, cookies in cookies_groups.items():
+            if job:
+                job.meta["website"] = int(clear / website * 100)
+                print(job.meta)
             self.test(username, cookies)
+            time.sleep(10)
+            clear += 1
+        if job:
+            job.meta["website"] = int(clear / website * 100)
+            print(job.meta)
 
 
 class Hb56ValidTester(ValidTester):
@@ -55,7 +69,7 @@ class SipglValidTester(ValidTester):
         ValidTester.__init__(self, website)
 
     def test(self, username, cookies):
-        print(f"Cookie测试 | source:{self.website} | user:{username}")
+        # print(f"Cookie测试 | source:{self.website} | user:{username}")
         del_flag = False
         try:
             cookie_list = json.loads(cookies)
@@ -64,18 +78,20 @@ class SipglValidTester(ValidTester):
                 cookie_jar.set(name=cookie["name"], value=cookie["value"], domain=cookie["domain"])
             response = request("GET", url=TEST_URL_MAP[self.website], cookies=cookie_jar, allow_redirects=False)
             if response.status_code == 200:
-                print(f"Cookie有效 | source:{self.website} | user:{username}")
+                # print(f"Cookie有效 | source:{self.website} | user:{username}")
+                pass
             else:
                 del_flag = True
-                print(f"Cookie失效 | source:{self.website} | user:{username}")
+                # print(f"Cookie失效 | source:{self.website} | user:{username}")
         except (ValueError, KeyError):
             del_flag = True
-            print(f"Cookie格式有误 | source:{self.website} | user:{username}")
+            # print(f"Cookie格式有误 | source:{self.website} | user:{username}")
         except TooManyRetries:
-            print(f"Cookie测试失败 | source:{self.website} | user:{username}")
+            # print(f"Cookie测试失败 | source:{self.website} | user:{username}")
+            pass
         if del_flag:
             self.cookies_db.delete(username)
-            print(f"已删除Cookie | source:{self.website} | user:{username}")
+            # print(f"已删除Cookie | source:{self.website} | user:{username}")
 
 
 if __name__ == '__main__':

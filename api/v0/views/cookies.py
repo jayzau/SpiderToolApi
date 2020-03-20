@@ -1,6 +1,8 @@
 import random
 
 from flask import request, jsonify
+from rq import get_current_connection
+from rq.job import Job
 
 from api.v0.enums import Status
 from api.v0.forms import AddAccountForm, DelAccountForm
@@ -176,7 +178,7 @@ def check_cookie_status():
                 # 这里要处理一下是否重复提交
                 password = accounts_db.get(username)
                 job = new_cookies.queue(cls_name, website, username, password)
-                job_ids.append(job.id)
+                job_ids.append(job.get_id())
             else:       # 任务已经提交过，但还未做处理/登录冷却期 避免重复提交
                 pass
     return {
@@ -196,5 +198,21 @@ def check_cookie_validity():
     job = check_cookies.queue()
     return {
         "status": Status.success.value,
-        "details": job.id
+        "details": job.get_id()
+    }
+
+
+@api.route("/check_cookie_validity_progress/<string:job_id>", methods=["GET"])
+def check_cookie_validity_progress(job_id):
+    """
+    查看检测进度
+    :return:
+    """
+    connection = get_current_connection()
+    if connection:
+        job = Job.fetch(job_id, connection)
+        if job:
+            return job.meta
+    return {
+        "detail": "No Such Job."
     }
