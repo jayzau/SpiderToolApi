@@ -19,6 +19,8 @@ api = RedPrint("cookies")
 def get_cookie(website):
     """
     获取指定类型cookie
+    新需求：
+        某网站单个账号限制查询次数/天 得做一定限制
     :param website:
     :return:
     """
