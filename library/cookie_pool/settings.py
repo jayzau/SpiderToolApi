@@ -1,3 +1,7 @@
+from functools import partial
+
+from library.pub_func import timedelta_ts
+
 REDIS_HOST = "127.0.0.1"
 REDIS_PORT = 6379
 REDIS_PASSWORD = None
@@ -18,7 +22,8 @@ GENERATOR_MAP = {
     "sipgl": "SipglCookiesGenerator"
 }
 COOKIE_FREQUENCY_LIMIT = {          # cookie调用频率限制
-    "hb56": 10
+    "hb56": 10,          # 间隔多少秒可使用一次
+    "sipgl": (50, partial(timedelta_ts, **{"minutes": 10}))        # 十分钟50次使用限制
 }
 
 LOGIN_LOCK_KEY = "login:lock:"

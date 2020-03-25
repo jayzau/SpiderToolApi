@@ -95,7 +95,7 @@ class RedisClient(object):
         key = f"{self.name()}:{name}"
         return self.db.set(key, "1", ex=ex, nx=nx, xx=xx)
 
-    def frequency_limit(self, name: str, upper_limit: int, duration: int):
+    def frequency_limit(self, name: str, upper_limit: int, duration):
         """
         频率限制
         :param duration: 限制时长(秒)
@@ -103,6 +103,12 @@ class RedisClient(object):
         :param upper_limit: 上限次数
         :return:
         """
+        if callable(duration):
+            _duration = int(duration())
+        elif isinstance(duration, int):
+            _duration = duration
+        else:
+            raise TypeError("The type of `duration` must be Callable or Int.")
         lock = f"{self.name()}:frequency:lock"
         while not self.db.set(lock, 1, ex=10, nx=True):      # 预防竞态条件
             time.sleep(1)
@@ -114,24 +120,15 @@ class RedisClient(object):
                 self.db.incr(key)
                 result = True
         else:
-            if len(str(duration)) >= 10:    # 大于等于10就理解为时间戳了
+            if len(str(_duration)) >= 10:    # 大于等于10就理解为时间戳了
                 self.db.set(key, 1)
-                self.db.expireat(key, duration)     # 赋初始值
+                self.db.expireat(key, _duration)     # 赋初始值
             else:
-                self.db.set(key, 1, ex=duration)    # 赋初始值
+                self.db.set(key, 1, ex=_duration)    # 赋初始值
             result = True
         self.db.delete(lock)
         return result
 
 
 if __name__ == '__main__':
-    import datetime
-    redis_cli = RedisClient("accounts", "hb56")
-    print(redis_cli.name())
-    ul = 24     # 测试 每分钟限制24次
-    for i in range(120):
-        stf_time = (datetime.datetime.now() + datetime.timedelta(minutes=1)).strftime("%Y-%m-%d %H:%M") + ":00"
-        ts = int(time.mktime(time.strptime(stf_time, '%Y-%m-%d %H:%M:%S')))
-        res = redis_cli.frequency_limit("test", ul, ts)
-        print("能否获取？", "能" if res else "不能")
-        time.sleep(1)
+    pass

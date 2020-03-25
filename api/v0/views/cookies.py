@@ -29,19 +29,30 @@ def get_cookie(website):
     if website:
         redis_cli = RedisClient(TYPE_COOKIES, website)
         times = COOKIE_FREQUENCY_LIMIT.get(website)
-        if times:
+        if isinstance(times, int):
             cookies = redis_cli.all()
-            if cookies:
-                while cookies and not cookie:
-                    cookie_keys = list(cookies.keys())
-                    account = random.choice(cookie_keys)
-                    if redis_cli.lock(account, times, nx=True):      # 上锁成功
-                        cookie = cookies[account]
-                        break
-                    else:       # 冷却期 暂不可用
-                        del cookies[account]
-                else:   # 便利完了还没找到可用的
-                    status = Status.busy.value
+            while cookies and not cookie:
+                cookie_keys = list(cookies.keys())
+                account = random.choice(cookie_keys)
+                if redis_cli.lock(account, times, nx=True):      # 上锁成功
+                    cookie = cookies[account]
+                    break
+                else:       # 冷却期 暂不可用
+                    del cookies[account]
+            else:   # 便利完了还没找到可用的
+                status = Status.busy.value
+        elif isinstance(times, tuple):
+            cookies = redis_cli.all()
+            while cookies and not cookie:
+                cookie_keys = list(cookies.keys())
+                account = random.choice(cookie_keys)
+                if redis_cli.frequency_limit(account, *times):      # 上锁成功
+                    cookie = cookies[account]
+                    break
+                else:       # 冷却期 暂不可用
+                    del cookies[account]
+            else:   # 便利完了还没找到可用的
+                status = Status.busy.value
         else:       # 无频率限制 随机取一个即可
             cookie = redis_cli.random()
 
