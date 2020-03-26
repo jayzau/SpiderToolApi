@@ -29,19 +29,10 @@ def new_cookies(cls_name: str, _website: str, username: str, password: str):
 @rq.job(func_or_queue="new_cookies")
 def check_cookies():
     try:
-        total = len(TESTER_MAP)
-        clear = 0
-        job = get_current_job()
         for website, cls_name in TESTER_MAP.items():
-            if job:
-                job.meta["total"] = int(clear / total * 100)
             tester = eval(cls_name + '(website="' + website + '")')
             tester.run()
             del tester
-            clear += 1
-        if job:
-            job.meta["total"] = int(clear / total * 100)
-            print(job.meta)
         time.sleep(CYCLE)
     except Exception as e:
         print(e.args)

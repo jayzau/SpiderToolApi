@@ -1,9 +1,14 @@
-from enum import Enum
+from enum import Enum, unique
 
 
-class Status(Enum):
+@unique
+class ResponseCode(Enum):
 
-    success = 200       # 正常响应
-    busy = 300          # 忙碌，资源不可用
-    input_err = 400     # 用户数据提交错误
-    system_err = 500    # 系统错误
+    SUCCESS = 20000       # 正常响应
+    BUSY = 30000          # 忙碌，资源不可用
+    INPUT_ERR = 40000     # 用户数据提交错误
+    SYSTEM_ERR = 50000    # 系统错误
+
+
+if __name__ == '__main__':
+    print(ResponseCode(20000))

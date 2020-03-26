@@ -1,10 +1,8 @@
 import random
 
 from flask import request, jsonify
-from rq import get_current_connection
-from rq.job import Job
 
-from api.v0.enums import Status
+from api.v0.enums import ResponseCode
 from api.v0.forms import AddAccountForm, DelAccountForm
 from library.cookie_pool.redis_cli import RedisClient
 from library.async_rq2 import new_cookies, check_cookies
@@ -25,7 +23,7 @@ def get_cookie(website):
     :return:
     """
     cookie = ""
-    status = Status.success.value
+    status = ResponseCode.SUCCESS.value
     if website:
         redis_cli = RedisClient(TYPE_COOKIES, website)
         times = COOKIE_FREQUENCY_LIMIT.get(website)
@@ -40,7 +38,7 @@ def get_cookie(website):
                 else:       # 冷却期 暂不可用
                     del cookies[account]
             else:   # 便利完了还没找到可用的
-                status = Status.busy.value
+                status = ResponseCode.BUSY.value
         elif isinstance(times, tuple):
             cookies = redis_cli.all()
             while cookies and not cookie:
@@ -52,13 +50,14 @@ def get_cookie(website):
                 else:       # 冷却期 暂不可用
                     del cookies[account]
             else:   # 便利完了还没找到可用的
-                status = Status.busy.value
+                status = ResponseCode.BUSY.value
         else:       # 无频率限制 随机取一个即可
             cookie = redis_cli.random()
 
     return jsonify({
-        "status": status,
-        "cookie": cookie,
+        "error_code": status,
+        "msg": "",
+        "data": cookie,
     })
 
 
@@ -86,10 +85,11 @@ def get_count(website=""):
     else:
         for website in GENERATOR_MAP.keys():
             details.append(get_result(website))
-    status = Status.success.value
+    status = ResponseCode.SUCCESS.value
     return jsonify({
-        "status": status,
-        "details": details
+        "error_code": status,
+        "msg": "",
+        "data": details
     })
 
 
@@ -103,13 +103,12 @@ def add_account():
     if form.validate():
         redis_cli = RedisClient(TYPE_ACCOUNTS, form.website.data)
         redis_cli.set(form.account.data, form.password.data)
-        status = Status.success.value
+        status = ResponseCode.SUCCESS.value
     else:
-        status = Status.input_err.value
-    error_str = form.errors
+        status = ResponseCode.INPUT_ERR.value
     return jsonify({
-        "status": status,
-        "error_str": error_str
+        "error_code": status,
+        "msg": form.errors
     })
 
 
@@ -127,13 +126,12 @@ def del_account():
         # 再删除账号
         redis_cli_accounts = RedisClient(TYPE_ACCOUNTS, form.website.data)
         redis_cli_accounts.delete(form.account.data)
-        status = Status.success.value
+        status = ResponseCode.SUCCESS.value
     else:
-        status = Status.input_err.value
-    error_str = form.errors
+        status = ResponseCode.INPUT_ERR.value
     return jsonify({
-        "status": status,
-        "error_str": error_str
+        "error_code": status,
+        "msg": form.errors
     })
 
 
@@ -159,10 +157,11 @@ def get_accounts(website=""):
     else:
         for website in GENERATOR_MAP.keys():
             details.append(get_result(website))
-    status = Status.success.value
+    status = ResponseCode.SUCCESS.value
     return jsonify({
-        "status": status,
-        "details": details
+        "error_code": status,
+        "msg": "",
+        "data": details
     })
 
 
@@ -194,10 +193,11 @@ def check_cookie_status():
                 job_ids.append(job.get_id())
             else:       # 任务已经提交过，但还未做处理/登录冷却期 避免重复提交
                 pass
-    return {
-        "status": Status.success.value,
-        "details": job_ids
-    }
+    return jsonify({
+        "status": ResponseCode.SUCCESS.value,
+        "msg": "",
+        "data": job_ids
+    })
 
 
 @api.route("/check_cookie_validity/", methods=["GET"])
@@ -210,22 +210,7 @@ def check_cookie_validity():
     """
     job = check_cookies.queue()
     return {
-        "status": Status.success.value,
-        "details": job.get_id()
-    }
-
-
-@api.route("/check_cookie_validity_progress/<string:job_id>", methods=["GET"])
-def check_cookie_validity_progress(job_id):
-    """
-    查看检测进度
-    :return:
-    """
-    connection = get_current_connection()
-    if connection:
-        job = Job.fetch(job_id, connection)
-        if job:
-            return job.meta
-    return {
-        "detail": "No Such Job."
+        "status": ResponseCode.SUCCESS.value,
+        "msg": "",
+        "data": job.get_id()
     }

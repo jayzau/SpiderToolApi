@@ -4,8 +4,8 @@ from werkzeug.exceptions import HTTPException
 
 class ApiException(HTTPException):
     code = 500
-    msg = 'There likes something happening...'
-    error_code = 999
+    msg = 'Whoops! There likes something happening...'
+    error_code = 9999
 
     def __init__(self, code=None, msg=None, error_code=None):
         if code:
