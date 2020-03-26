@@ -177,8 +177,8 @@ def check_cookie_status():
     """
     job_ids = []
     for website, cls_name in GENERATOR_MAP.items():
-        cookies_db = RedisClient('cookies', website)
-        accounts_db = RedisClient('accounts', website)
+        cookies_db = RedisClient(TYPE_COOKIES, website)
+        accounts_db = RedisClient(TYPE_ACCOUNTS, website)
 
         accounts_user_names = accounts_db.user_names()
         cookies_user_names = cookies_db.user_names()

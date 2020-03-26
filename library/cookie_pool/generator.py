@@ -6,7 +6,8 @@ import requests
 
 from library.cookie_pool.request import request
 from library.cookie_pool.redis_cli import RedisClient
-from library.cookie_pool.settings import LOGIN_FREQUENCY_LIMIT, LOGIN_DEFAULT_FREQUENCY_LIMIT, LOGIN_LOCK_KEY
+from library.cookie_pool.settings import LOGIN_FREQUENCY_LIMIT, LOGIN_DEFAULT_FREQUENCY_LIMIT, LOGIN_LOCK_KEY, \
+    TYPE_ACCOUNTS, TYPE_COOKIES
 from library.pub_func import login_lock_key
 
 
@@ -19,8 +20,8 @@ class CookiesGenerator(object):
         :param website: 名称
         """
         self.website = website
-        self.cookies_db = RedisClient('cookies', self.website)
-        self.accounts_db = RedisClient('accounts', self.website)
+        self.cookies_db = RedisClient(TYPE_COOKIES, self.website)
+        self.accounts_db = RedisClient(TYPE_ACCOUNTS, self.website)
         wait_time = LOGIN_FREQUENCY_LIMIT.get(website) or LOGIN_DEFAULT_FREQUENCY_LIMIT
         self.wait_time = wait_time
         if wait_time:

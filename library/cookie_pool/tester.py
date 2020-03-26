@@ -7,7 +7,7 @@ from requests.exceptions import ConnectionError
 
 from library.cookie_pool.redis_cli import RedisClient
 from library.cookie_pool.request import request, TooManyRetries
-from library.cookie_pool.settings import TEST_URL_MAP
+from library.cookie_pool.settings import TEST_URL_MAP, TYPE_COOKIES, TYPE_ACCOUNTS
 
 
 class ValidTester(object):
@@ -15,8 +15,8 @@ class ValidTester(object):
 
     def __init__(self, website='default'):
         self.website = website
-        self.cookies_db = RedisClient('cookies', self.website)
-        self.accounts_db = RedisClient('accounts', self.website)
+        self.cookies_db = RedisClient(TYPE_COOKIES, self.website)
+        self.accounts_db = RedisClient(TYPE_ACCOUNTS, self.website)
 
     def test(self, username, cookies):
         raise NotImplementedError
