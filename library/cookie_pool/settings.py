@@ -1,3 +1,4 @@
+import logging
 from functools import partial
 
 from library.pub_func import timedelta_ts
@@ -35,3 +36,9 @@ LOGIN_FREQUENCY_LIMIT = {           # 账号登录频率限制
 
 GENERATOR_PROCESS = True
 VALID_PROCESS = True
+
+
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s | %(levelname)s | %(filename)s:%(lineno)d | %(message)s'
+)

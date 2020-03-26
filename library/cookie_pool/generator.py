@@ -1,4 +1,5 @@
 import json
+import logging
 from random import randint
 
 import requests
@@ -6,9 +7,12 @@ import requests
 from library.cookie_pool.request import request
 from library.cookie_pool.redis_cli import RedisClient
 from library.cookie_pool.settings import LOGIN_FREQUENCY_LIMIT, LOGIN_DEFAULT_FREQUENCY_LIMIT, LOGIN_LOCK_KEY
+from library.pub_func import login_lock_key
 
 
 class CookiesGenerator(object):
+    logger = logging.getLogger("CookiesGenerator")
+
     def __init__(self, website='default'):
         """
         父类, 初始化一些对象
@@ -47,7 +51,8 @@ class CookiesGenerator(object):
             lst.append({
                 "name": cookie.name,
                 "value": cookie.value,
-                "domain": cookie.domain
+                "domain": cookie.domain,
+                "path": cookie.path,
             })
         return lst
 
@@ -58,27 +63,30 @@ class CookiesGenerator(object):
         :param password:
         :return:
         """
-        if self.accounts_db.lock(f"{LOGIN_LOCK_KEY}{username}", self.wait_time, xx=True):
+        if self.accounts_db.lock(login_lock_key(LOGIN_LOCK_KEY, self.website, username), self.wait_time, xx=True):
             # 在任务提交范围时间内才执行 超时说明worker数量不够 任务执行过于缓慢
             result = self.new_cookies(username, password)
             # 成功获取
             if result.get('status') == 1:
                 cookies = self.process_cookies(result.get('cookies'))
-                print(f'{username} 成功获取到Cookies', cookies)
+                self.logger.info(f"{self.website:^10} | user:{username:<20} | Login successfully.")
                 if self.cookies_db.set(username, json.dumps(cookies)):
-                    print(f'{username} 成功保存Cookies')
+                    self.logger.info(f"{self.website:^10} | user:{username:<20} | Save successfully.")
             # 密码错误，移除账号
             elif result.get('status') == 2:
-                print(result.get('content'))
+                content = result.get("content")
+                self.logger.info(f"{self.website:^10} | user:{username:<20} | Password error. | {content}")
                 if self.accounts_db.delete(username):
-                    print(f'密码错误，删除账号 {username}')
+                    self.logger.warning(f"{self.website:^10} | user:{username:<20} | Account has been deleted.")
             elif result.get('status') == -1:
+                self.logger.warning(f"{self.website:^10} | user:{username:<20} | Account has been locked.")
                 if self.accounts_db.delete(username):
-                    print(f'账号失效，删除账号 {username}')
+                    self.logger.warning(f"{self.website:^10} | user:{username:<20} | Account has been deleted.")
             else:
-                print(result.get('content'))
+                content = result.get("content")
+                self.logger.warning(f"{self.website:^10} | user:{username:<20} | Login failed. | {content}")
         else:
-            print(f"{username} 任务超时，取消执行")
+            self.logger.warning(f"{self.website:^10} | user:{username:<20} | Task time out.")
 
 
 class Hb56CookiesGenerator(CookiesGenerator):
@@ -105,6 +113,12 @@ class SipglCookiesGenerator(CookiesGenerator):
         CookiesGenerator.__init__(self, website)
 
     def new_cookies(self, username, password):
+        cookie_result = {
+            "status": 0,
+            "cookies": [],
+            "content": "默认值"
+        }
+
         session = requests.Session()
         host = "cx.sipgl-fa.com:81"
         own_headers = {
@@ -126,9 +140,9 @@ class SipglCookiesGenerator(CookiesGenerator):
             res = request("GET", url=url, session=session, headers=pic_headers)
         pic = res.content
 
-        pic_str = request("POST", url="http://101.200.120.188/api_v0/captcha/", files={"img": pic}).text
+        pic_str = request("POST", url="http://127.0.0.1:8001/api_v0/captcha/", files={"img": pic}).text
         if not pic_str:
-            pic_str = request("POST", url="http://101.200.120.188/api_v0/captcha/", files={"img": pic}).text
+            pic_str = request("POST", url="http://127.0.0.1:8001/api_v0/captcha/", files={"img": pic}).text
 
         if pic_str:
             """登录并验证"""
@@ -140,16 +154,16 @@ class SipglCookiesGenerator(CookiesGenerator):
             }
             r = request("POST", url=url, session=session, headers=pic_headers, data=data)
             if 'errorCode:1' in r.text:
-                if res:
-                    pass
-        cookies = session.cookies
+                cookie_result['content'] = "验证码识别错误"
+            else:
+                cookies = session.cookies
+                cookie_result['status'] = 1
+                cookie_result['cookies'] = cookies
+        else:
+            cookie_result['content'] = "验证码未识别"
         session.close()
-        return {
-            "status": 1,
-            "cookies": cookies,
-            "content": ""
-        }
+        return cookie_result
 
 
 if __name__ == '__main__':
-    pass
+    SipglCookiesGenerator("sipgl").async_run("account1", "password1")

@@ -1,10 +1,9 @@
 import json
-import time
+import logging
 
 import requests
 from requests.cookies import RequestsCookieJar
 from requests.exceptions import ConnectionError
-from rq import get_current_job
 
 from library.cookie_pool.redis_cli import RedisClient
 from library.cookie_pool.request import request, TooManyRetries
@@ -12,6 +11,8 @@ from library.cookie_pool.settings import TEST_URL_MAP
 
 
 class ValidTester(object):
+    logger = logging.getLogger("ValidTester")
+
     def __init__(self, website='default'):
         self.website = website
         self.cookies_db = RedisClient('cookies', self.website)
@@ -20,21 +21,17 @@ class ValidTester(object):
     def test(self, username, cookies):
         raise NotImplementedError
 
+    def del_cookie(self, username):
+        self.cookies_db.delete(username)
+        self.logger.info(f"{self.website:^10} | user:{username:<20} | Deleted.")
+
     def run(self):
         cookies_groups = self.cookies_db.all()
-        job = get_current_job()
-        website = len(cookies_groups)
-        clear = 0
         for username, cookies in cookies_groups.items():
-            if job:
-                job.meta["website"] = int(clear / website * 100)
-                print(job.meta)
+            self.logger.info(f"{self.website:^10} | user:{username:<20} | Test start.")
             self.test(username, cookies)
-            time.sleep(10)
-            clear += 1
-        if job:
-            job.meta["website"] = int(clear / website * 100)
-            print(job.meta)
+            self.logger.info(f"{self.website:^10} | user:{username:<20} | Test finished.")
+            # time.sleep(10)
 
 
 class Hb56ValidTester(ValidTester):
@@ -69,30 +66,26 @@ class SipglValidTester(ValidTester):
         ValidTester.__init__(self, website)
 
     def test(self, username, cookies):
-        # print(f"Cookie测试 | source:{self.website} | user:{username}")
         del_flag = False
         try:
             cookie_list = json.loads(cookies)
             cookie_jar = RequestsCookieJar()
             for cookie in cookie_list:
-                cookie_jar.set(name=cookie["name"], value=cookie["value"], domain=cookie["domain"])
+                cookie_jar.set(name=cookie["name"], value=cookie["value"], domain=cookie["domain"], path=cookie["path"])
             response = request("GET", url=TEST_URL_MAP[self.website], cookies=cookie_jar, allow_redirects=False)
             if response.status_code == 200:
-                # print(f"Cookie有效 | source:{self.website} | user:{username}")
-                pass
+                self.logger.info(f"{self.website:^10} | user:{username:<20} | Online.")
             else:
                 del_flag = True
-                # print(f"Cookie失效 | source:{self.website} | user:{username}")
+                self.logger.info(f"{self.website:^10} | user:{username:<20} | Offline.")
         except (ValueError, KeyError):
             del_flag = True
-            # print(f"Cookie格式有误 | source:{self.website} | user:{username}")
+            self.logger.info(f"{self.website:^10} | user:{username:<20} | Wrong type.")
         except TooManyRetries:
-            # print(f"Cookie测试失败 | source:{self.website} | user:{username}")
-            pass
+            self.logger.info(f"{self.website:^10} | user:{username:<20} | Network anomaly.")
         if del_flag:
-            self.cookies_db.delete(username)
-            # print(f"已删除Cookie | source:{self.website} | user:{username}")
+            self.del_cookie(username)
 
 
 if __name__ == '__main__':
-    SipglValidTester().run()
+    SipglValidTester("sipgl").run()

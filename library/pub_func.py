@@ -23,3 +23,14 @@ def timedelta_ts(**kwargs):
         raise KeyError()
     ts = int(datetime.datetime.strptime(stf_time, date_str).timestamp())
     return ts
+
+
+def login_lock_key(key, website, password):
+    """
+    账号登录锁
+    :param key:
+    :param website:
+    :param password:
+    :return:
+    """
+    return f"{key}{website}:{password}"

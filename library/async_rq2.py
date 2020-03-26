@@ -26,7 +26,7 @@ def new_cookies(cls_name: str, _website: str, username: str, password: str):
         print(e.args)
 
 
-@rq.job(func_or_queue="new_cookies")
+@rq.job(func_or_queue="test_cookies")
 def check_cookies():
     try:
         for website, cls_name in TESTER_MAP.items():

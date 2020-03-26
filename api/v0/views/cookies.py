@@ -7,7 +7,8 @@ from api.v0.forms import AddAccountForm, DelAccountForm
 from library.cookie_pool.redis_cli import RedisClient
 from library.async_rq2 import new_cookies, check_cookies
 from library.cookie_pool.settings import TYPE_COOKIES, TYPE_ACCOUNTS, GENERATOR_MAP, COOKIE_FREQUENCY_LIMIT, \
-    LOGIN_LOCK_KEY, LOGIN_TASK_WAITING_TIME
+    LOGIN_TASK_WAITING_TIME, LOGIN_LOCK_KEY
+from library.pub_func import login_lock_key
 from library.redprint import RedPrint
 
 api = RedPrint("cookies")
@@ -186,7 +187,7 @@ def check_cookie_status():
             # 遍历账号 查看有没有cookie
             if username in cookies_user_names:      # cookie还存在 有效性不在这里检测
                 pass
-            elif accounts_db.lock(f"{LOGIN_LOCK_KEY}{username}", LOGIN_TASK_WAITING_TIME, nx=True):
+            elif accounts_db.lock(login_lock_key(LOGIN_LOCK_KEY, website, username), LOGIN_TASK_WAITING_TIME, nx=True):
                 # 这里要处理一下是否重复提交
                 password = accounts_db.get(username)
                 job = new_cookies.queue(cls_name, website, username, password)
@@ -194,7 +195,7 @@ def check_cookie_status():
             else:       # 任务已经提交过，但还未做处理/登录冷却期 避免重复提交
                 pass
     return jsonify({
-        "status": ResponseCode.SUCCESS.value,
+        "error_code": ResponseCode.SUCCESS.value,
         "msg": "",
         "data": job_ids
     })
@@ -210,7 +211,7 @@ def check_cookie_validity():
     """
     job = check_cookies.queue()
     return {
-        "status": ResponseCode.SUCCESS.value,
+        "error_code": ResponseCode.SUCCESS.value,
         "msg": "",
         "data": job.get_id()
     }
