@@ -3,12 +3,12 @@ from flask_rq2 import RQ
 from library.cookie_pool.generator import *
 from library.cookie_pool.tester import *
 import time
-from library.cookie_pool.settings import CYCLE, TESTER_MAP
+from library.cookie_pool.settings import CYCLE, TESTER_MAP, LOGIN_TASK_WAITING_TIME
 
 rq = RQ()
 
 
-@rq.job(func_or_queue="new_cookies")
+@rq.job(func_or_queue="new_cookies", ttl=LOGIN_TASK_WAITING_TIME)
 def new_cookies(cls_name: str, _website: str, username: str, password: str):
     """
     异步登录账号，针对单个账号
@@ -26,7 +26,7 @@ def new_cookies(cls_name: str, _website: str, username: str, password: str):
         print(e.args)
 
 
-@rq.job(func_or_queue="test_cookies")
+@rq.job(func_or_queue="test_cookies", ttl=10)
 def check_cookies():
     try:
         for website, cls_name in TESTER_MAP.items():

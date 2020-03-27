@@ -176,6 +176,7 @@ def check_cookie_status():
     :return:
     """
     job_ids = []
+    msg = []
     for website, cls_name in GENERATOR_MAP.items():
         cookies_db = RedisClient(TYPE_COOKIES, website)
         accounts_db = RedisClient(TYPE_ACCOUNTS, website)
@@ -186,17 +187,23 @@ def check_cookie_status():
         for username in accounts_user_names:
             # 遍历账号 查看有没有cookie
             if username in cookies_user_names:      # cookie还存在 有效性不在这里检测
-                pass
-            elif accounts_db.lock(login_lock_key(LOGIN_LOCK_KEY, website, username), LOGIN_TASK_WAITING_TIME, nx=True):
-                # 这里要处理一下是否重复提交
+                continue
+            lock_key = login_lock_key(LOGIN_LOCK_KEY, website, username)        # 这里要处理一下是否重复提交
+            lock_flag = accounts_db.lock(lock_key, LOGIN_TASK_WAITING_TIME, nx=True)    # 上锁
+            if lock_flag:       # 上锁成功
                 password = accounts_db.get(username)
                 job = new_cookies.queue(cls_name, website, username, password)
                 job_ids.append(job.get_id())
             else:       # 任务已经提交过，但还未做处理/登录冷却期 避免重复提交
-                pass
+                ttl = accounts_db.lock_ttl(lock_key)
+                msg.append(dict(
+                    website=website,
+                    username=username,
+                    ttl=ttl
+                ))
     return jsonify({
         "error_code": ResponseCode.SUCCESS.value,
-        "msg": "",
+        "msg": msg,
         "data": job_ids
     })
 

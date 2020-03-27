@@ -95,6 +95,15 @@ class RedisClient(object):
         key = f"{self.name()}:{name}"
         return self.db.set(key, "1", ex=ex, nx=nx, xx=xx)
 
+    def lock_ttl(self, name):
+        """
+        获取锁的冷却时间
+        :param name:
+        :return:
+        """
+        key = f"{self.name()}:{name}"
+        return self.db.ttl(key)
+
     def frequency_limit(self, name: str, upper_limit: int, duration):
         """
         频率限制
