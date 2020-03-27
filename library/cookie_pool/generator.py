@@ -4,7 +4,7 @@ from random import randint
 
 import requests
 
-from library.cookie_pool.request import request
+from library.request import request
 from library.cookie_pool.redis_cli import RedisClient
 from library.cookie_pool.settings import LOGIN_FREQUENCY_LIMIT, LOGIN_DEFAULT_FREQUENCY_LIMIT, LOGIN_LOCK_KEY, \
     TYPE_ACCOUNTS, TYPE_COOKIES

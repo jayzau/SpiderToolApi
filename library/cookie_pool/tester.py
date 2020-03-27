@@ -6,7 +6,7 @@ from requests.cookies import RequestsCookieJar
 from requests.exceptions import ConnectionError
 
 from library.cookie_pool.redis_cli import RedisClient
-from library.cookie_pool.request import request, TooManyRetries
+from library.request import request, TooManyRetries
 from library.cookie_pool.settings import TEST_URL_MAP, TYPE_COOKIES, TYPE_ACCOUNTS
 
 
