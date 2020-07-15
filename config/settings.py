@@ -11,7 +11,7 @@ REDIS_URL = "redis://{host}:{port}/{db}".format(
     host=REDIS_CONFIG["host"], port=REDIS_CONFIG["port"], db=REDIS_CONFIG["db"])
 
 MYSQL_CONFIG = {
-    'database': 'xkkweb',
+    'database': 'demo',
     'user': 'jayzau',
     'password': '123456',
     'host': 'localhost',
