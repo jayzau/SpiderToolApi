@@ -1,5 +1,0 @@
-
-
-class RedisClient(object):
-    pass
-
