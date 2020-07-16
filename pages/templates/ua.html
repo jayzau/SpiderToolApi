@@ -1,0 +1,79 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="zh">
+	<head>
+		<title>获取浏览器UA(userAgent)信息</title>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+	</head>
+	<body>
+		<table cellpadding=0 cellspacing=0 width="100%;">
+			<caption style="text-align: center;font-size:24px;font-weight:bolder;">
+				Request
+			</caption>
+			<tr>
+				<td style="height:40px;text-align:right;font-size:16px;font-weight:bolder;width:50%">
+					屏幕分辨率
+				</td>
+				<td style="height:40px;text-align:right;font-size:16px;font-weight:bolder">
+					&ensp;:&ensp;
+				</td>
+				<td style="height:40px;text-align:left;font-size:16px;font-weight:bolder;color:red;width:50%">
+					<script language="JavaScript" type="text/javascript">
+                        document.write(window.screen.width + "×" + window.screen.height);
+                    </script>
+				</td>
+			</tr>
+			<tr>
+				<td style="height:40px;text-align:right;font-size:16px;font-weight:bolder;width:50%">
+					操作系统
+				</td>
+				<td style="height:40px;text-align:right;font-size:16px;font-weight:bolder">
+					&ensp;:&ensp;
+				</td>
+				<td style="height:40px;text-align:left;font-size:16px;font-weight:bolder;color:red;width:50%">
+					<script language="JavaScript" type="text/javascript">
+                        document.write(navigator.platform);
+                    </script>
+				</td>
+			</tr>
+			<tr>
+				<td style="height:40px;text-align:right;font-size:16px;font-weight:bolder;width:50%">
+					Chrome Driver
+				</td>
+				<td style="height:40px;text-align:right;font-size:16px;font-weight:bolder">
+					&ensp;:&ensp;
+				</td>
+				<td style="height:40px;text-align:left;font-size:16px;font-weight:bolder;color:red;width:50%">
+					<script language="JavaScript" type="text/javascript">
+                        document.write(navigator.webdriver);
+                    </script>
+				</td>
+			</tr>
+
+			<tr>
+				<td style="height:40px;text-align:right;font-size:16px;font-weight:bolder;width:50%">
+					IP
+				</td>
+				<td style="height:40px;text-align:right;font-size:16px;font-weight:bolder">
+					&ensp;:&ensp;
+				</td>
+				<td style="height:40px;text-align:left;font-size:16px;font-weight:bolder;color:red;width:50%">
+					{{ remote_addr }}
+				</td>
+			</tr>
+
+			{% for key, value in headers.items() %}
+				<tr>
+					<td style="height:40px;text-align:right;font-size:16px;font-weight:bolder;width:50%">
+						{{ key }}
+					</td>
+					<td style="height:40px;text-align:right;font-size:16px;font-weight:bolder">
+						&ensp;:&ensp;
+					</td>
+					<td style="height:40px;text-align:left;font-size:16px;font-weight:bolder;color:red;width:50%">
+						{{ value }}
+					</td>
+				</tr>
+			{% endfor %}
+		</table>
+	</body>
+</html>

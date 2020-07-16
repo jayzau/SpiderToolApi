@@ -5,8 +5,10 @@ from config.settings import FLASK_CONFIG
 
 def register_blueprints(app):
     from api import create_blueprint
+    from pages.views import pages
 
     app.register_blueprint(create_blueprint(), url_prefix="/api")
+    app.register_blueprint(pages, url_prefix="/pages")
 
 
 def err_handel(app):

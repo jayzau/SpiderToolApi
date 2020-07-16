@@ -146,11 +146,12 @@ if __name__ == '__main__':
         return charset, img_bytes.getvalue()
 
     print(request("POST", "http://101.200.120.188/api/captcha/train/"))
-    # for _ in range(500):
+    # print(request("PUT", "http://101.200.120.188/api/captcha/reload/"))
+    # for _ in range(8100):
     #     pic_str, pic_content = get_pic()
     #     pic_str = pic_str.lower()
     #     print(pic_str)
-    #     # response = cnn.post_pic(img=pic_content, eagle=True, train=True)
+    #     # response = cnn.post_pic(img=pic_content, website="demo", max_captcha=4, char_set="2004")
     #     response = cnn.upload_pic(
     #         img=pic_content, captcha_str=pic_str, website="demo", max_captcha=4, char_set="2004")
     #     print(response)
