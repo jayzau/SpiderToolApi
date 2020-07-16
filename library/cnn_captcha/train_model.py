@@ -18,7 +18,7 @@ class TrainError(Exception):
 
 class TrainModel(CNN):
     def __init__(self, train_img_path, verify_img_path, char_set, model_save_dir, model_save_name, cycle_stop, acc_stop,
-                 cycle_save, image_suffix, train_batch_size, test_batch_size, verify=False):
+                 cycle_save, image_suffix, train_batch_size, test_batch_size, verify=False, **kwargs):
         # 训练相关参数
         self.cycle_stop = cycle_stop
         self.acc_stop = acc_stop

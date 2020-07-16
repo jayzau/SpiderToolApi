@@ -96,3 +96,61 @@ class CNNCaptcha(object):
         url = self.base_url + "upload/"
         resp = request("POST", url=url, data=data, files=files)
         return resp.json()
+
+
+if __name__ == '__main__':
+    cnn = CNNCaptcha(
+        host="101.200.120.188", port=80,
+    )
+
+    def get_pic():
+        from random import randint, choice
+        from PIL import Image, ImageDraw, ImageFont
+        from io import BytesIO
+
+        WIDTH = 150
+        HEIGHT = 50
+        CHAR_LENGTH = 4
+        FONT_SIZE = 30
+        CHARSET = list('ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789')
+        FONT = "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc"
+
+        img = Image.new('RGB', (WIDTH, HEIGHT), (255, 255, 255))  # 建立一个图片
+        draw = ImageDraw.Draw(img)
+        for i in range(randint(1, 8)):
+            draw.line(xy=[(randint(0, WIDTH), randint(0, HEIGHT)),
+                          (randint(0, WIDTH), randint(0, HEIGHT))],
+                      fill=(randint(100, 254), randint(100, 254), randint(100, 254)),
+                      width=3)
+        for i in range(810):
+            draw.point(xy=[randint(1, WIDTH - 1), randint(1, HEIGHT - 1)],
+                       fill=(randint(0, 254), randint(1, 254), randint(1, 254)),)
+        font = ImageFont.truetype(font=FONT, size=FONT_SIZE)
+        charset = ""
+        for index in range(CHAR_LENGTH):
+            char = choice(CHARSET)
+            charset += char
+            x = int((WIDTH / CHAR_LENGTH * (index + 1) - WIDTH / CHAR_LENGTH / 2))
+            if not index:
+                x += randint(-20, 0)
+            elif index == CHAR_LENGTH:
+                x += randint(-10, 10)
+            else:
+                x += randint(-15, 5)
+            y = randint(0, int((HEIGHT - FONT_SIZE) / 2))
+            draw.text((x, y), char, font=font,
+                      fill=(randint(0, 200), randint(0, 200), randint(0, 200)))
+        # img.show()
+        img_bytes = BytesIO()
+        img.save(img_bytes, format="PNG")
+        return charset, img_bytes.getvalue()
+
+    print(request("POST", "http://101.200.120.188/api/captcha/train/"))
+    # for _ in range(500):
+    #     pic_str, pic_content = get_pic()
+    #     pic_str = pic_str.lower()
+    #     print(pic_str)
+    #     # response = cnn.post_pic(img=pic_content, eagle=True, train=True)
+    #     response = cnn.upload_pic(
+    #         img=pic_content, captcha_str=pic_str, website="demo", max_captcha=4, char_set="2004")
+    #     print(response)
