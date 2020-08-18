@@ -217,13 +217,19 @@ def train():
         difference = int(timestamp - at_time)
         if difference > 60:         # 创建时间大于xx的
             recognizer_key, md5, pic_str = parse_pic_name(file)     # 放入指定训练集
+            _, max_captcha, char_set = parse_recognizer_key(recognizer_key)     # 判断 pic_str 是否合理
+            if not (set(list(CHAR_SET[char_set])) > set(list(pic_str))):
+                os.remove(path)
+                continue
+            if max_captcha != len(pic_str):
+                os.remove(path)
+                continue
             train_image_dir = os.path.join(CAPTCHA_TRAIN_FOLDER, recognizer_key)
             if not os.path.isdir(train_image_dir):
                 os.mkdir(train_image_dir)
             re_file = make_pic_name_for_train(pic_str)
             re_path = os.path.join(train_image_dir, re_file)
             shutil.move(path, re_path)
-
     for dirname in os.listdir(CAPTCHA_TRAIN_FOLDER):
         # 训练集
         train_image_dir = os.path.join(CAPTCHA_TRAIN_FOLDER, dirname)       # 训练集文件夹

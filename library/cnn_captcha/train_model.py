@@ -9,7 +9,7 @@ import os
 
 from tensorflow.python.framework.errors_impl import NotFoundError
 
-from library.cnn_captcha.cnnlib.network import CNN, logger
+from library.cnn_captcha.cnnlib.network import CNN
 
 
 class TrainError(Exception):
@@ -61,17 +61,17 @@ class TrainModel(CNN):
                                          model_save_name)
 
         # 相关信息打印
-        logger.info("-->图片尺寸: {} X {}".format(image_height, image_width))
-        logger.info("-->验证码长度: {}".format(self.max_captcha))
-        logger.info("-->验证码共{}类 {}".format(self.char_set_len, char_set))
-        logger.info("-->使用测试集为 {}".format(train_img_path))
-        logger.info("-->使验证集为 {}".format(verify_img_path))
+        print("-->图片尺寸: {} X {}".format(image_height, image_width))
+        print("-->验证码长度: {}".format(self.max_captcha))
+        print("-->验证码共{}类 {}".format(self.char_set_len, char_set))
+        print("-->使用测试集为 {}".format(train_img_path))
+        print("-->使验证集为 {}".format(verify_img_path))
 
         # test model input and output
-        logger.info(">>> Start model test")
+        print(">>> Start model test")
         batch_x, batch_y = self.get_batch(0, size=100)
-        logger.info(">>> input batch images shape: {}".format(batch_x.shape))
-        logger.info(">>> input batch labels shape: {}".format(batch_y.shape))
+        print(">>> input batch images shape: {}".format(batch_x.shape))
+        print(">>> input batch labels shape: {}".format(batch_y.shape))
 
     @staticmethod
     def gen_captcha_text_image(img_path, img_name):
@@ -126,18 +126,18 @@ class TrainModel(CNN):
 
     def confirm_image_suffix(self):
         # 在训练前校验所有文件格式
-        logger.info("开始校验所有图片后缀")
+        print("开始校验所有图片后缀")
         for index, img_name in enumerate(self.train_images_list):
-            logger.info("{} image pass".format(index), end='\r')
+            print("{} image pass".format(index), end='\r')
             if not img_name.endswith(self.image_suffix):
                 raise TrainError('confirm images suffix：you request [.{}] file but get file [{}]'
                                  .format(self.image_suffix, img_name))
-        logger.info("所有图片格式校验通过")
+        print("所有图片格式校验通过")
 
     def train_cnn(self):
         y_predict = self.model()
-        logger.info(">>> input batch predict shape: {}".format(y_predict.shape))
-        logger.info(">>> End model test")
+        print(">>> input batch predict shape: {}".format(y_predict.shape))
+        print(">>> End model test")
         # 计算概率 损失
         with tf.name_scope('cost'):
             cost = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits=y_predict, labels=self.Y))
@@ -170,7 +170,7 @@ class TrainModel(CNN):
                     saver.restore(sess, self.model_save_path)
                 # 判断捕获model文件夹中没有模型文件的错误
                 except (ValueError, NotFoundError):
-                    logger.info("model文件夹为空，将创建新模型")
+                    print("model文件夹为空，将创建新模型")
             else:
                 pass
             # 写入日志
@@ -190,8 +190,8 @@ class TrainModel(CNN):
                         self.X: batch_x_test, self.Y: batch_y_test, self.keep_prob: 1.})
                     acc_image_t = sess.run(accuracy_image_count, feed_dict={
                         self.X: batch_x_test, self.Y: batch_y_test, self.keep_prob: 1.})
-                    logger.info("第{}/{}次训练 >>> ".format(step, self.cycle_stop))
-                    logger.info("[训练集] 字符准确率为 {:.5f} 图片准确率为 {:.5f} >>> loss {:.10f}"
+                    print("第{}/{}次训练 >>> ".format(step, self.cycle_stop))
+                    print("[训练集] 字符准确率为 {:.5f} 图片准确率为 {:.5f} >>> loss {:.10f}"
                                 .format(acc_char, acc_image_t, cost_))
 
                     # 准确率达到99%后保存并停止
@@ -201,7 +201,7 @@ class TrainModel(CNN):
                         break_count = 0
                     if break_count >= 5:
                         saver.save(sess, self.model_save_path)
-                        logger.info(f"训练集准确率连续5次达到{int(self.acc_stop * 100)}%，保存模型成功")
+                        print(f"训练集准确率连续5次达到{int(self.acc_stop * 100)}%，保存模型成功")
                         break
 
                     # with open("loss_train.csv", "a+") as f:
@@ -213,7 +213,7 @@ class TrainModel(CNN):
                         self.X: batch_x_verify, self.Y: batch_y_verify, self.keep_prob: 1.})
                     acc_image = sess.run(accuracy_image_count, feed_dict={
                         self.X: batch_x_verify, self.Y: batch_y_verify, self.keep_prob: 1.})
-                    logger.info(
+                    print(
                         "[验证集] 字符准确率为 {:.5f} 图片准确率为 {:.5f} >>> loss {:.10f}".format(
                             acc_char, acc_image, cost_
                         )
@@ -225,12 +225,12 @@ class TrainModel(CNN):
                     # 准确率达到99%后保存并停止
                     if acc_image > self.acc_stop:
                         saver.save(sess, self.model_save_path)
-                        logger.info(f"验证集准确率达到{int(self.acc_stop * 100)}%，保存模型成功")
+                        print(f"验证集准确率达到{int(self.acc_stop * 100)}%，保存模型成功")
                         break
                 # 每训练500轮就保存一次
                 if i % self.cycle_save == 0:
                     saver.save(sess, self.model_save_path)
-                    logger.info("定时保存模型成功")
+                    print("定时保存模型成功")
                 step += 1
             saver.save(sess, self.model_save_path)
         return acc_image

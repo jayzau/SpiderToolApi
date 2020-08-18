@@ -1,15 +1,11 @@
-import logging
-
 import tensorflow as tf
 import numpy as np
 import os
 
 
-logger = logging.getLogger()
-
-
 class CNN(object):
     def __init__(self, image_height, image_width, max_captcha, char_set, model_save_dir, model_save_name):
+        tf.reset_default_graph()
         # 初始值
         self.image_height = image_height
         self.image_width = image_width
@@ -60,7 +56,7 @@ class CNN(object):
 
     def model(self):
         x = tf.reshape(self.X, shape=[-1, self.image_height, self.image_width, 1])
-        logger.info(">>> input x: {}".format(x))
+        print(">>> input x: {}".format(x))
 
         # 卷积层1
         wc1 = tf.get_variable(name='wc1', shape=[3, 3, 1, 32], dtype=tf.float32,
@@ -85,7 +81,7 @@ class CNN(object):
         conv3 = tf.nn.relu(tf.nn.bias_add(tf.nn.conv2d(conv2, wc3, strides=[1, 1, 1, 1], padding='SAME'), bc3))
         conv3 = tf.nn.max_pool(conv3, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME')
         conv3 = tf.nn.dropout(conv3, self.keep_prob)
-        logger.info(">>> convolution 3: ", conv3.shape)
+        print(">>> convolution 3: ", conv3.shape)
         next_shape = conv3.shape[1] * conv3.shape[2] * conv3.shape[3]
 
         # 全连接层1
