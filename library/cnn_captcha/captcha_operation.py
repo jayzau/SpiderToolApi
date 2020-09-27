@@ -51,6 +51,9 @@ def parse_pic_name(pic_name):
     if len(keys) < 3:
         recognizer_key, md5 = keys
         pic_str = ""
+    elif len(keys) > 3:
+        *recognizer_keys, md5, pic_str = keys
+        recognizer_key = "_".join(recognizer_keys)
     else:
         recognizer_key, md5, pic_str = keys
     return recognizer_key, md5, pic_str
